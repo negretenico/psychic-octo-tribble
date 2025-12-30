@@ -1,13 +1,27 @@
 #include "../EngineLibrary/ByteDecoder.h"
-#include "../EngineLibrary/Commands.h"
+#include "../EngineLibrary/Events.h"
 #include "../EngineLibrary/FileUtility.h"
+#include "../EngineLibrary/MatchingEngine.h"
 #include <algorithm>
 #include <cstdio> 
 #include <iostream>
 #include <optional> 
+#include <ranges>
 #include <string_view> 
-#include <type_traits>
-#include <variant>
+auto for_each_func = [](const Events::Event& event) {
+	switch (event) {
+	case Events::Event::Accepted:
+		std::printf("Order Accepted\n");
+		break;
+	case Events::Event::Rejected:
+		std::printf("Order Rejected\n");
+		break;
+	default:
+		std::printf("Unknown Event\n");
+		break;
+	}
+	};
+
 int main(int argc, char* argv[]) {
 	if (argc < 2) {
 		std::cerr << "Usage: EngineRunner <orders.bin>\n";
@@ -20,14 +34,11 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	auto orders = Utility::DecodeNewOrderCommand(orderData.value());
-	std::for_each(orders.begin(), orders.end(), [](const Commands::EngineCommands& commands) {
-		std::visit([](const auto& command) {
-			using T = std::decay_t<decltype(command)>;
-			if constexpr (std::is_same_v<T, Commands::NewOrder>) {
-				std::printf("NewOrder - OrderID: %llu, Price: %llu, Qty: %u, Side: %u\n",
-					command.order_id, command.price, command.qty, command.side);
-			}
-			}, commands);
-		});
+	Engine::MatchingEngine engine;
+	std::ranges::for_each(orders |
+		std::views::transform([&engine](const auto& command) {
+			return engine.apply(command);
+			})
+		, for_each_func);
 	return 0;
 }

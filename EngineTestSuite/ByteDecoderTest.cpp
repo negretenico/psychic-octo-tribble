@@ -30,7 +30,7 @@ namespace UtilityTest
 			Assert::AreEqual(static_cast<size_t>(1), orders.size());
 			Commands::NewOrder order = std::get<Commands::NewOrder>(orders[0]);
 			Assert::AreEqual(static_cast<uint64_t>(1), order.order_id);
-			Assert::AreEqual(static_cast<uint8_t>(1), order.side);
+			Assert::AreEqual(static_cast<uint8_t>(Commands::Side::Sell), static_cast<uint8_t>(order.side));
 			Assert::AreEqual(static_cast<uint64_t>(80), order.price);
 			Assert::AreEqual(static_cast<uint32_t>(50), order.qty);
 		}
